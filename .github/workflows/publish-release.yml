@@ -178,6 +178,22 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ needs.resolve-release-context.outputs.arm_run_id }}
 
+      - name: Rename release files to Bugium naming
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for f in artifacts/**/ungoogled-chromium*; do
+            bn="$(basename "$f")"
+            dn="$(dirname "$f")"
+            nb="${bn/ungoogled-chromium/bugium}"
+            if [ "$bn" != "$nb" ]; then
+              mv -f "$f" "$dn/$nb"
+            fi
+          done
+          ls -la artifacts || true
+          find artifacts -maxdepth 3 -type f | sort
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
@@ -185,13 +201,13 @@ jobs:
           fail_on_unmatched_files: true
           overwrite_files: true
           files: |
-            artifacts/**/ungoogled-chromium*
+            artifacts/**/bugium*
 
   publish-winget:
     needs:
       - resolve-release-context
       - publish-release
-    if: ${{ needs.resolve-release-context.outputs.ready == 'true' && needs.resolve-release-context.outputs.publishable == 'true' }}
+    if: ${{ false }}
     runs-on: ubuntu-slim
     steps:
       - name: Get version
@@ -210,7 +226,7 @@ jobs:
     needs:
       - resolve-release-context
       - publish-release
-    if: ${{ needs.resolve-release-context.outputs.ready == 'true' && needs.resolve-release-context.outputs.publishable == 'true' }}
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout ungoogled-chromium-windows
